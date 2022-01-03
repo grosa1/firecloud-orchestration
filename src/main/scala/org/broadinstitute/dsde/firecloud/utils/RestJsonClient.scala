@@ -24,7 +24,7 @@ trait RestJsonClient extends FireCloudRequestBuilding with PerformanceLogging {
   implicit val system: ActorSystem
   implicit val executionContext: ExecutionContext
   implicit val materializer: Materializer
-  val http = Http(system)
+  //val http = Http(system)
 
   private final val NoPerfLabel: Instant = Instant.MIN
 
@@ -57,8 +57,10 @@ trait RestJsonClient extends FireCloudRequestBuilding with PerformanceLogging {
     val tick = if (label.nonEmpty) Instant.now() else NoPerfLabel
 
     for {
-      response <- http.singleRequest(finalRequest)
+      _ <- Future(println(s"REQUEST: $finalRequest"))
+      response <- Http().singleRequest(finalRequest)
       decodedResponse <- if(compressed) Future.successful(decodeResponse(response)) else Future.successful(response)
+      _ <- Future(println(s"RESPONSE: $decodedResponse"))
     } yield {
       if (tick != NoPerfLabel) {
         val tock = Instant.now()

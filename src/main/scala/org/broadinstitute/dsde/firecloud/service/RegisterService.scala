@@ -32,6 +32,8 @@ class RegisterService(val rawlsDao: RawlsDAO, val samDao: SamDAO, val thurloeDao
       userStatus <- if (!isRegistered.enabled.google || !isRegistered.enabled.ldap) {
         for {
           _ <- thurloeDao.saveKeyValues(userInfo,  Map("email" -> userInfo.userEmail))
+         // _ <- Future(logger.info(s"XXX registering email ${userInfo.userEmail} with Sam after 10 seconds"))
+         // _ <- Future(Thread.sleep(10000))
           registerResult <- registerUser(userInfo, basicProfile.termsOfService)
         } yield registerResult
       } else {
