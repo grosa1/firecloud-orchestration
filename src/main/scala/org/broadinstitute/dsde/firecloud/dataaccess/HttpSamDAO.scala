@@ -39,7 +39,7 @@ class HttpSamDAO( implicit val system: ActorSystem, val materializer: Materializ
   }
 
   override def getRegistrationStatus(implicit userInfo: WithAccessToken): Future[RegistrationInfo] = {
-    authedRequestToObject[RegistrationInfo](Get(samUserRegistrationUrl), label=Some("HttpSamDAO.getRegistrationStatus"))
+    authedRequestToObject[RegistrationInfo](Get(samUserRegistrationUrl + "/v1"), label=Some("HttpSamDAO.getRegistrationStatus"))
   }
 
   override def getUserIds(email: RawlsUserEmail)(implicit userInfo: WithAccessToken): Future[UserIdInfo] = {
