@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.firecloud.service
 
+import akka.actor.ActorSystem
 import com.typesafe.scalalogging.LazyLogging
 import org.broadinstitute.dsde.firecloud.dataaccess._
 import org.broadinstitute.dsde.firecloud.model.ModelJsonProtocol._
@@ -10,19 +11,21 @@ import org.broadinstitute.dsde.rawls.model.Notifications.{ActivationNotification
 import org.broadinstitute.dsde.rawls.model.{ErrorReport, RawlsUserSubjectId}
 import akka.http.scaladsl.model.StatusCodes
 import org.broadinstitute.dsde.firecloud.FireCloudConfig.Sam
+import org.broadinstitute.dsde.workbench.util.Retry
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 
 object RegisterService {
   val samTosTextUrl = s"${Sam.baseUrl}/tos/text"
 
   def constructor(app: Application)()(implicit executionContext: ExecutionContext) =
-    new RegisterService(app.rawlsDAO, app.samDAO, app.thurloeDAO, app.googleServicesDAO)
+    new RegisterService(app.rawlsDAO, app.samDAO, app.thurloeDAO, app.googleServicesDAO, app.system)
 
 }
 
-class RegisterService(val rawlsDao: RawlsDAO, val samDao: SamDAO, val thurloeDao: ThurloeDAO, val googleServicesDAO: GoogleServicesDAO)
-  (implicit protected val executionContext: ExecutionContext) extends LazyLogging {
+class RegisterService(val rawlsDao: RawlsDAO, val samDao: SamDAO, val thurloeDao: ThurloeDAO, val googleServicesDAO: GoogleServicesDAO, val system: ActorSystem)
+  (implicit protected val executionContext: ExecutionContext) extends Retry with LazyLogging {
 
   def createUpdateProfile(userInfo: UserInfo, basicProfile: BasicProfile): Future[PerRequestMessage] = {
     for {
@@ -53,7 +56,7 @@ class RegisterService(val rawlsDao: RawlsDAO, val samDao: SamDAO, val thurloeDao
 
   private def registerUser(userInfo: UserInfo, termsOfService: Option[String]): Future[RegistrationInfo] = {
     for {
-      registrationInfo <- samDao.registerUser(termsOfService)(userInfo)
+      registrationInfo <- (retryUntilSuccessOrTimeout(failureLogMessage = "User registration failed")(1.second, 10.seconds)(() => samDao.registerUser(termsOfService)(userInfo))): Future[RegistrationInfo]
       _ <- googleServicesDAO.publishMessages(FireCloudConfig.Notification.fullyQualifiedNotificationTopic, Seq(NotificationFormat.write(ActivationNotification(RawlsUserSubjectId(userInfo.id))).compactPrint))
     } yield {
       registrationInfo

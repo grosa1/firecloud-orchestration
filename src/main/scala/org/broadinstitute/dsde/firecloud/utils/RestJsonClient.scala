@@ -57,10 +57,8 @@ trait RestJsonClient extends FireCloudRequestBuilding with PerformanceLogging {
     val tick = if (label.nonEmpty) Instant.now() else NoPerfLabel
 
     for {
-      _ <- Future(println(s"REQUEST: $finalRequest"))
-      response <- Http().singleRequest(finalRequest)
+      response <- Http(system).singleRequest(finalRequest)
       decodedResponse <- if(compressed) Future.successful(decodeResponse(response)) else Future.successful(response)
-      _ <- Future(println(s"RESPONSE: $decodedResponse"))
     } yield {
       if (tick != NoPerfLabel) {
         val tock = Instant.now()

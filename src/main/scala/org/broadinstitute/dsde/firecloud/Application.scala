@@ -1,5 +1,6 @@
 package org.broadinstitute.dsde.firecloud
 
+import akka.actor.ActorSystem
 import org.broadinstitute.dsde.firecloud.dataaccess._
 
 /**
@@ -17,4 +18,5 @@ case class Application(agoraDAO: AgoraDAO,
                        thurloeDAO: ThurloeDAO,
                        shareLogDAO: ShareLogDAO,
                        importServiceDAO: ImportServiceDAO,
-                       shibbolethDAO: ShibbolethDAO)
+                       shibbolethDAO: ShibbolethDAO,
+                       system: ActorSystem)

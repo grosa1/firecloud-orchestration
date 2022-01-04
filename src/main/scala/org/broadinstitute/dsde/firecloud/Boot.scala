@@ -36,7 +36,7 @@ object Boot extends App with LazyLogging {
     val importServiceDAO:ImportServiceDAO = new HttpImportServiceDAO
     val shibbolethDAO:ShibbolethDAO = new HttpShibbolethDAO
 
-    val app:Application = Application(agoraDAO, googleServicesDAO, ontologyDAO, consentDAO, rawlsDAO, samDAO, searchDAO, researchPurposeSupport, thurloeDAO, shareLogDAO, importServiceDAO, shibbolethDAO);
+    val app:Application = Application(agoraDAO, googleServicesDAO, ontologyDAO, consentDAO, rawlsDAO, samDAO, searchDAO, researchPurposeSupport, thurloeDAO, shareLogDAO, importServiceDAO, shibbolethDAO, system)
 
     val agoraPermissionServiceConstructor: (UserInfo) => AgoraPermissionService = AgoraPermissionService.constructor(app)
     val exportEntitiesByTypeActorConstructor: (ExportEntitiesByTypeArguments) => ExportEntitiesByTypeActor = ExportEntitiesByTypeActor.constructor(app, materializer)
