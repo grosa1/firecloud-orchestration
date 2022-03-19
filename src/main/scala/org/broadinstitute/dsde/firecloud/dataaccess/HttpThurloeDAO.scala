@@ -44,7 +44,7 @@ class HttpThurloeDAO ( implicit val system: ActorSystem, implicit val executionC
       adminAuthedRequest(Get(queryUri), false, true, label = Some("HttpThurloeDAO.getAllUserValuesForKey"))
         .flatMap { x =>
           logger.info("XXX got Thurloe response " + x)
-          x.entity.toStrict(5 seconds).foreach(e => logger.info("XXX Thurloe strict entity = " + e))
+          x.entity.toStrict(5 seconds).foreach(e => logger.info("XXX Thurloe strict entity = " + e.data.utf8String))
           Unmarshal(x).to[Seq[ThurloeKeyValue]]
         }
         .map { tkvs =>
