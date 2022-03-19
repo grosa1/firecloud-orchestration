@@ -16,6 +16,7 @@ import org.broadinstitute.dsde.workbench.util.health.SubsystemStatus
 import spray.json.DefaultJsonProtocol._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.duration._
 import scala.util.Try
 /**
   * Created by mbemis on 10/21/16.
@@ -40,7 +41,13 @@ class HttpThurloeDAO ( implicit val system: ActorSystem, implicit val executionC
   override def getAllUserValuesForKey(key: String): Future[Map[String, String]] = {
     val queryUri = Uri(UserApiService.remoteGetQueryURL).withQuery(Query(("key"->key)))
     wrapExceptions {
-      adminAuthedRequest(Get(queryUri), false, true, label = Some("HttpThurloeDAO.getAllUserValuesForKey")).flatMap(x => Unmarshal(x).to[Seq[ThurloeKeyValue]]).map { tkvs =>
+      adminAuthedRequest(Get(queryUri), false, true, label = Some("HttpThurloeDAO.getAllUserValuesForKey"))
+        .flatMap { x =>
+          logger.info("XXX got Thurloe response " + x)
+          x.entity.toStrict(5 seconds).foreach(e => logger.info("XXX Thurloe strict entity = " + e))
+          Unmarshal(x).to[Seq[ThurloeKeyValue]]
+        }
+        .map { tkvs =>
         val resultOptions = tkvs.map { tkv => (tkv.userId, tkv.keyValuePair.flatMap { kvp => kvp.value }) }
         val actualResultsOnly = resultOptions collect { case (Some(firecloudSubjId), Some(thurloeValue)) => (firecloudSubjId, thurloeValue) }
         actualResultsOnly.toMap
